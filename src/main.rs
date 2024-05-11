@@ -1,6 +1,5 @@
 use std::env;
 use std::net::UdpSocket;
-use u8;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -13,11 +12,11 @@ fn main() {
     let mac = x.iter().map(|hex| str_to_byte(*hex)).collect::<Vec<u8>>();
 
     println!("Sending packet to MAC: {}", mac_str);
-    send_wake(mac.try_into().unwrap()).unwrap();
+    send_wake(mac.try_into().unwrap()).expect("Package wasn't able to be sent 🙁");
 }
 
 fn str_to_byte(hex: &str) -> u8 {
-    u8::from_str_radix(hex, 16).unwrap()
+    u8::from_str_radix(hex, 16).expect("String could not be resolved!")
 }
 
 fn send_wake(mac_addr: [u8; 6]) -> std::io::Result<()> {
@@ -29,10 +28,11 @@ fn send_wake(mac_addr: [u8; 6]) -> std::io::Result<()> {
         buf.append(&mut mac_addr_vec.clone());
     }
     {
-        let socket = UdpSocket::bind("127.0.0.1:34254")?;
+        let socket = UdpSocket::bind("0.0.0.0:0")?;
         socket.set_broadcast(true)?;
 
         socket.send_to(&buf, "255.255.255.255:0")?;
     } // the socket is closed here
+    //println!("{:?}",buf);
     Ok(())
 }
