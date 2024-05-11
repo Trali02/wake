@@ -1,6 +1,8 @@
 use std::env;
 use std::net::UdpSocket;
 
+use local_ip_address::local_ip;
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
@@ -28,11 +30,13 @@ fn send_wake(mac_addr: [u8; 6]) -> std::io::Result<()> {
         buf.append(&mut mac_addr_vec.clone());
     }
     {
-        let socket = UdpSocket::bind("0.0.0.0:0")?;
+        let my_local_ip = local_ip().unwrap();
+        println!("This is my local IP address: {:?}", my_local_ip);
+        let socket = UdpSocket::bind(format!("{}:0", my_local_ip))?;
         socket.set_broadcast(true)?;
 
         socket.send_to(&buf, "255.255.255.255:0")?;
     } // the socket is closed here
-    //println!("{:?}",buf);
+      //println!("{:?}",buf);
     Ok(())
 }
