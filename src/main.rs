@@ -1,17 +1,50 @@
-use std::env;
-use std::net::UdpSocket;
-
+use directories::ProjectDirs;
 use local_ip_address::local_ip;
+use std::collections::HashMap;
+use std::env;
+use std::fs;
+use std::fs::read_to_string;
+use std::fs::File;
+use std::net::UdpSocket;
+use std::vec;
+
+const CONFIG_FILENAME: &str = "MAC.config";
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() < 2 {
-        print!("No receiving mac adress was given");
-        return;
+    let config_dir = ProjectDirs::from("", "", "wake").unwrap();
+    let config_path = config_dir.config_dir();
+    fs::create_dir_all(config_path).expect("couldn't create config dir");
+    if !config_path.join(CONFIG_FILENAME).exists() {
+        File::create(config_path.join(CONFIG_FILENAME)).expect("Couldn't create config file!");
     }
-    let mac_str = &args[1];
-    let x = mac_str.split('-').collect::<Vec<&str>>();
-    let mac = x.iter().map(|hex| str_to_byte(*hex)).collect::<Vec<u8>>();
+
+    let file_str = read_to_string(config_path.join(CONFIG_FILENAME)).unwrap();
+    let lines = file_str.lines().collect::<Vec<&str>>();
+
+    let mut map = HashMap::<&str, &str>::new();
+
+    for line in lines {
+        let words = line.split(':').collect::<Vec<&str>>();
+        if words.len() < 2 {
+            continue;
+        }
+        map.insert(words[0].trim(), words[1].trim());
+    }
+
+    let args: Vec<String> = env::args().collect();
+    let mut mac_str = if args.len() < 2 {
+        map.values()
+            .next()
+            .expect("No MAC address could be resolved!")
+    } else {
+        args[1].as_str()
+    };
+
+    if map.contains_key(mac_str) {
+        mac_str = map[mac_str];
+    }
+
+    let mac = parse_mac(mac_str);
 
     println!("Sending packet to MAC: {}", mac_str);
     send_wake(mac.try_into().unwrap()).expect("Package wasn't able to be sent 🙁");
@@ -38,4 +71,9 @@ fn send_wake(mac_addr: [u8; 6]) -> std::io::Result<()> {
     } // the socket is closed here
       //println!("{:?}",buf);
     Ok(())
+}
+
+fn parse_mac(mac: &str) -> Vec<u8> {
+    let x = mac.split('-').collect::<Vec<&str>>();
+    x.iter().map(|hex| str_to_byte(*hex)).collect::<Vec<u8>>()
 }
