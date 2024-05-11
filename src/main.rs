@@ -31,7 +31,6 @@ fn send_wake(mac_addr: [u8; 6]) -> std::io::Result<()> {
     }
     {
         let my_local_ip = local_ip().unwrap();
-        println!("This is my local IP address: {:?}", my_local_ip);
         let socket = UdpSocket::bind(format!("{}:0", my_local_ip))?;
         socket.set_broadcast(true)?;
 
