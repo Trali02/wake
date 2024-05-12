@@ -68,7 +68,7 @@ fn main() {
             }
             ProgArgs::LookupTarget(lookup_name) => {
                 if !map.contains_key(lookup_name.as_str()) {
-                    print!("Failed to resolve lookup target \"{}\"", lookup_name);
+                    println!("Failed to resolve lookup target \"{}\"", lookup_name);
                     continue;
                 }
                 let addr = map[lookup_name.as_str()];
