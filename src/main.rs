@@ -1,3 +1,5 @@
+use anyhow::anyhow;
+use anyhow::Result;
 use directories::ProjectDirs;
 use local_ip_address::local_ip;
 use std::collections::HashMap;
@@ -73,7 +75,7 @@ fn main() {
                     println!("Failed to resolve lookup target \"{}\"", lookup_name);
                     continue;
                 }
-                let addr = map[lookup_name.as_str()];
+                let addr: &str = map[lookup_name.as_str()];
                 match send_wake(addr) {
                     Ok(_) => {}
                     Err(_) => println!("Failed to send package to Mac address \"{}\"", addr),
@@ -91,12 +93,12 @@ fn main() {
     }
 }
 
-fn str_to_byte(hex: &str) -> u8 {
-    u8::from_str_radix(hex, 16).expect("String could not be resolved to a hex format!")
+fn str_to_byte(hex: &str) -> Result<u8> {
+    return Ok(u8::from_str_radix(hex, 16)?);
 }
 
-fn send_wake(addr: &str) -> std::io::Result<()> {
-    let addr_raw = parse_mac(addr);
+fn send_wake(addr: &str) -> Result<()> {
+    let addr_raw = parse_mac(addr)?;
 
     let mut buf: Vec<u8> = Vec::with_capacity(102);
     let mut p1: Vec<u8> = vec![0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
@@ -116,9 +118,13 @@ fn send_wake(addr: &str) -> std::io::Result<()> {
     Ok(())
 }
 
-fn parse_mac(mac: &str) -> Vec<u8> {
+fn parse_mac(mac: &str) -> Result<Vec<u8>> {
+    if mac.len() != 17 {
+        return Err(anyhow!("Given Mac address isn't the correct length!"));
+    }
     let x = mac.split('-').collect::<Vec<&str>>();
-    x.iter().map(|hex| str_to_byte(*hex)).collect::<Vec<u8>>()
+    let res: Result<Vec<u8>> = x.into_iter().map(|hex| str_to_byte(hex)).collect();
+    return res;
 }
 
 fn get_args() -> Vec<ProgArgs> {
