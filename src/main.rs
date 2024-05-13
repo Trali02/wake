@@ -16,6 +16,7 @@ const ARG_LOOKUP_TARGET: &str = "-l";
 const ARG_LOOKUP_TARGET_VERBOSE: &str = "--lookup";
 const ARG_HELP: &str = "-h";
 const ARG_HELP_VERBOSE: &str = "--help";
+const ARG_CONFIG_LOCATION: &str = "--config-location";
 
 const HELP_MESSAGE: &str = "-m, --mac    : takes the mac address as argument, 
                the mac address format is FF-FF-FF-FF-FF-FF
@@ -26,6 +27,7 @@ const HELP_MESSAGE: &str = "-m, --mac    : takes the mac address as argument,
 enum ProgArgs {
     MacTarget(String),
     LookupTarget(String),
+    ConfigLocation,
     Help,
     None,
 }
@@ -79,6 +81,12 @@ fn main() {
             }
             ProgArgs::None => {}
             ProgArgs::Help => println!("{}", HELP_MESSAGE),
+            ProgArgs::ConfigLocation => println!(
+                "{}",
+                config_path
+                    .to_str()
+                    .unwrap_or("Couldn't find config directory!")
+            ),
         }
     }
 }
@@ -129,6 +137,7 @@ fn get_args() -> Vec<ProgArgs> {
                 None => ProgArgs::None,
             }),
             ARG_HELP | ARG_HELP_VERBOSE => args.push(ProgArgs::Help),
+            ARG_CONFIG_LOCATION => args.push(ProgArgs::ConfigLocation),
             _ => args.push(ProgArgs::None),
         }
     }
